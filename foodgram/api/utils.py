@@ -1,8 +1,8 @@
-from api.models import IngredientsRecipe, Ingredient, Recipe
+from recipe.models import IngredientsRecipe, Ingredient, Recipe
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from rest_framework.response import Response
-from rest_framework import generics, status
+from rest_framework import status
 
 
 def create_tags_ingredients(recipe, ingredients, tags):

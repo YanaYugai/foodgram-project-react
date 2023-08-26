@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import Tag, Recipe, Ingredient, IngredientsRecipe, Favorite, Cart
+from recipe.models import Tag, Recipe, Ingredient, IngredientsRecipe, Favorite, Cart
 from django.core.files.base import ContentFile
 import base64
 from rest_framework.validators import UniqueTogetherValidator
@@ -218,5 +218,3 @@ class CartSerializer(FavoriteSerializer):
                 message='Рецепт уже добавлен в корзину'
             ),
         ]
-
-

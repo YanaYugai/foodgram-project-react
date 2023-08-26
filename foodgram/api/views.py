@@ -1,6 +1,6 @@
 
 from api. serializers import TagSerializer, RecipeReadSerializer, RecipeCreateSerializer, FavoriteSerializer, CartSerializer, IngredientSerializer, FollowsSerializer, FollowResultSerializer
-from api.models import Tag, Recipe, Favorite, Cart, Ingredient, IngredientsRecipe
+from recipe.models import Tag, Recipe, Favorite, Cart, Ingredient, IngredientsRecipe
 from rest_framework import viewsets, status, mixins
 from django.http import Http404, FileResponse
 from rest_framework.response import Response
