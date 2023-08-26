@@ -7,7 +7,6 @@ class User(AbstractUser):
     first_name = models.CharField(_('имя'), max_length=150)
     last_name = models.CharField(_('фамилия'), max_length=150)
     email = models.EmailField(_('почта'), max_length=254)
-    #password = models.CharField(_('пароль'), max_length=150)
 
     class Meta:
         ordering = ['username']
@@ -16,5 +15,13 @@ class User(AbstractUser):
 
 
 class Follow(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='follower',
+    )
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='following',
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
