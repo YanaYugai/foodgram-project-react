@@ -9,7 +9,7 @@ class RecipeFilter(FilterSet):
     is_favorited = filters.NumberFilter(method='get_is_favorited')
 
     class Meta:
-        model=Recipe
+        model = Recipe
         fields = ('tags', 'author', 'is_in_shopping_cart', 'is_favorited')
 
     def get_is_favorited(self, queryset, name, value):
@@ -27,5 +27,5 @@ class IngredientFilter(FilterSet):
     name = filters.CharFilter(lookup_expr='istartwith')
 
     class Meta:
-        model=Ingredient
-        fields=('name', )
+        model = Ingredient
+        fields = ('name', )

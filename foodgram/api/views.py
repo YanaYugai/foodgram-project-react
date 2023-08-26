@@ -1,11 +1,9 @@
 
-from django.shortcuts import render
-from api. serializers import TagSerializer, RecipeReadSerializer, RecipeCreateSerializer, FavoriteSerializer, CartSerializer, IngredientSerializer
+from api. serializers import TagSerializer, RecipeReadSerializer, RecipeCreateSerializer, FavoriteSerializer, CartSerializer, IngredientSerializer, FollowsSerializer, FollowResultSerializer
 from api.models import Tag, Recipe, Favorite, Cart, Ingredient, IngredientsRecipe
-from rest_framework import viewsets
+from rest_framework import viewsets, status, mixins
 from django.http import Http404, FileResponse
 from rest_framework.response import Response
-from rest_framework import generics, status
 from rest_framework.decorators import action
 from api.paginators import LimitPagination
 import io
@@ -20,6 +18,38 @@ from api.permissions import IsUserAdminAuthorOrReadOnly
 from api.filters import RecipeFilter, IngredientFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from api.utils import get_obj, post_instance
+from django.contrib.auth import get_user_model
+from users.models import Follow
+
+
+User = get_user_model()
+
+
+class FollowApiView(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = FollowsSerializer
+    pagination_class = LimitPagination
+    permission_classes = (IsAuthenticated, )
+
+    def create(self, request, user_id):
+        serializer = self.get_serializer(data={'user': request.user.id, 'author': get_obj(user_id, User).pk})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        author = User.objects.get(pk=serializer.validated_data['author'].id)
+        result = FollowResultSerializer(author, context={'request': request})
+        return Response(result.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        author = get_obj(self.kwargs['user_id'], User)
+        if Follow.objects.filter(user=request.user.id, author=author.id).exists():
+            self.perform_destroy(Follow.objects.get(user=request.user.id, author=author.id))
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def list(self, request, *args, **kwargs):
+        queryset = User.objects.filter(following__user=request.user.id)
+        pages = self.paginate_queryset(queryset)
+        serializer = FollowResultSerializer(pages, many=True, context={'request': request})
+        return self.get_paginated_response(serializer.data)
 
 
 class TagReadView(viewsets.ReadOnlyModelViewSet):

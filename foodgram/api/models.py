@@ -32,7 +32,6 @@ class Recipe(models.Model):
         ordering= ['-id']
 
 
-
 class IngredientsRecipe(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='ingredientsrecipe')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredientsrecipe')
@@ -47,8 +46,3 @@ class Cart(models.Model):
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='favorites')
-
-
-class Follow(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
