@@ -53,7 +53,7 @@ def get_obj(pk: int, model: Union[User, Recipe]) -> Union[User, Recipe]:
 
 
 def post_instance(request, serializer, pk: int) -> Response:
-    """Добавдение рецепта в избранное или в корзину.
+    """Добавление рецепта в избранное или в корзину.
 
     Args:
         request: Объект запроса.

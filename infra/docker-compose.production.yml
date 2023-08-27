@@ -12,13 +12,8 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
   backend:
-    build: ../foodgram/
+    image: yanayugai/foodgram_backend
     env_file: .env
-    command: sh -c "python manage.py migrate &&
-                    python manage.py comand &&
-                    python manage.py collectstatic &&
-                    cp -r /app/collected_static/. /backend_static/static/ &&
-                    gunicorn --bind 0.0.0.0:8000 foodgram.wsgi"
     volumes:
       - static:/backend_static
       - media:/app/media/
@@ -27,7 +22,7 @@ services:
     restart: always
   frontend:
     env_file: .env
-    build: ../frontend/
+    image: yanayugai/foodgram_frontend
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
@@ -43,4 +38,3 @@ services:
     depends_on:
       - backend
       - frontend
-
