@@ -4,8 +4,12 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from rest_framework import routers
 
-from api.views import (FollowApiView, IngredientReadView, RecipeViewSet,
-                       TagReadView)
+from api.views import (
+    FollowApiView,
+    IngredientReadView,
+    RecipeViewSet,
+    TagReadView,
+)
 
 router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet)
