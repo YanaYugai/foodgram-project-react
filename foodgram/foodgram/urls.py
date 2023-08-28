@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path, re_path
+from django.views.generic import TemplateView
 from rest_framework import routers
 
 from api.views import (
@@ -18,6 +19,8 @@ router.register(r'ingredients', IngredientReadView)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/docs/', TemplateView.as_view(template_name='redoc.html'),
+         name='docs'),
     path(
         'api/users/<int:user_id>/subscribe/',
         FollowApiView.as_view({'post': 'create', 'delete': 'destroy'}),
