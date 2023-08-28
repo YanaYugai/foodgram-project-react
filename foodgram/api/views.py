@@ -248,7 +248,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         c = canvas.Canvas(buf, pagesize=letter, bottomup=0)
         text_obj = c.beginText()
         text_obj.setTextOrigin(inch, inch)
-        pdfmetrics.registerFont(TTFont('Verdana', 'Verdana.ttf', 'UTF-8'))
+        pdfmetrics.registerFont(TTFont('Verdana', 'data/Verdana.ttf', 'UTF-8'))
         text_obj.setFont('Verdana', 17)
         ingredients = (
             IngredientsRecipe.objects.filter(recipe__carts__user=request.user)
