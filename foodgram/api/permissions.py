@@ -18,8 +18,4 @@ class IsUserAdminAuthorOrReadOnly(BasePermission):
             True - функция сработала удачно, иначе False.
 
         """
-        return request.method in SAFE_METHODS or (
-            obj.author == request.user
-            or request.user.is_staff
-            or request.user.is_superuser
-        )
+        return request.method in SAFE_METHODS or obj.author == request.user
