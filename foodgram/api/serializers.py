@@ -132,7 +132,7 @@ class FollowResultSerializer(CustomUserSerializer):
             recipes = recipes[: int(recipes_limit)]
         return RecipeFollowSerializer(recipes, many=True).data
 
-    def get_recipes_count(self, user: User) -> int:
+    def get_recipes_count(self, author: User) -> int:
         """Мeтод для подстчета рецептов у автора.
 
         Args:
@@ -142,7 +142,7 @@ class FollowResultSerializer(CustomUserSerializer):
             Возвращает количество рецептов.
 
         """
-        return user.recipes.count()
+        return author.recipes.count()
 
 
 class FollowsSerializer(serializers.ModelSerializer):
