@@ -113,7 +113,7 @@ class FollowResultSerializer(CustomUserSerializer):
             'recipes_count',
         )
 
-    def get_recipes(self, user: User) -> OrderedDict[str, Any]:
+    def get_recipes(self, author: User) -> OrderedDict[str, Any]:
         """Мeтод для получения рецептов автора.
 
         Args:
@@ -123,10 +123,10 @@ class FollowResultSerializer(CustomUserSerializer):
             Возвращает данные из сериализатора `RecipeFollowSerializer`.
 
         """
-        recipes = user.recipes.all()
+        recipes = author.recipes.all()
         recipes_limit = self.context['request'].query_params.get(
             'recipes_limit',
-            False,
+            None,
         )
         if recipes_limit:
             recipes = recipes[: int(recipes_limit)]
