@@ -6,12 +6,9 @@ from recipe.models import Ingredient, Recipe, Tag, User
 class RecipeFilter(FilterSet):
     """Фильтр для модели `Recipe`."""
 
-    tags = filters.ModelMultipleChoiceFilter(
-        queryset=Tag.objects.all(),
+    tags = filters.AllValuesMultipleFilter(
         field_name='tags__slug',
-        to_field_name='slug',
     )
-    author = filters.ModelChoiceFilter(queryset=User.objects.all())
     is_in_shopping_cart = filters.NumberFilter(
         method='get_is_in_shopping_cart',
     )
