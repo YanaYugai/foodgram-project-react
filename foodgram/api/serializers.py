@@ -129,7 +129,10 @@ class FollowResultSerializer(CustomUserSerializer):
             None,
         )
         if recipes_limit:
-            recipes = recipes[: int(recipes_limit)]
+            try:
+                recipes = recipes[: int(recipes_limit)]
+            except ValueError:
+                return serializers.ValidationError('Неверное значение!')
         return RecipeFollowSerializer(recipes, many=True).data
 
     def get_recipes_count(self, author: User) -> int:
