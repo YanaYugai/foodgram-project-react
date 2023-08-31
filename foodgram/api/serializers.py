@@ -1,11 +1,12 @@
 from typing import Any, Dict, List, OrderedDict
 
-from djoser.serializers import UserCreateSerializer, UserSerializer
+from django.core.validators import MaxValueValidator, MinValueValidator
+from djoser.serializers import UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from api import utils
+from api.constant import MAX_VALUE, MIN_VALUE
 from recipe.models import (
     Cart,
     Favorite,
@@ -45,45 +46,12 @@ class CustomUserSerializer(UserSerializer):
             True - пользователь подписан на автора, иначе False.
 
         """
+        user = self.context['request'].user
         return (
-            self.context['request'].user.is_authenticated
-            and Follow.objects.filter(
-                user=self.context['request'].user,
-                author=obj,
-            ).exists()
+            user.is_authenticated
+            and user != obj
+            and user.follower.filter(author=obj).exists()
         )
-
-
-class CustomCreateUserSerializer(UserCreateSerializer):
-    """Сериализатор для модели `User` для создания пользователя."""
-
-    class Meta:
-        model = User
-        fields = (
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            "password",
-        )
-
-    def validate_username(self, username: str) -> str:
-        """Валидация запроса на использование me в качестве username.
-
-        Args:
-            username: логин.
-
-        Returns:
-            В случае успешной валидации возвращает username.
-
-        Raises:
-            ValidationError: Ошибка при валидации.
-
-        """
-        if username == "me":
-            raise serializers.ValidationError('Имя `me` нельзя использовать!')
-        return username
 
 
 class RecipeFollowSerializer(serializers.ModelSerializer):
@@ -179,6 +147,11 @@ class FollowsSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Нельзя подписаться на себя')
         return data
 
+    def to_representation(self, instance):
+        return FollowResultSerializer(
+            instance.author, context=self.context,
+        ).data
+
 
 class IngredientSerializer(serializers.ModelSerializer):
     """Сериализатор для модели `Ingredient`."""
@@ -252,12 +225,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             True - рецепт в избранном у пользователя, иначе False.
 
         """
+        user = self.context['request'].user
         return (
-            self.context['request'].user.is_authenticated
-            and Favorite.objects.filter(
-                user=self.context['request'].user,
-                recipe=recipe,
-            ).exists()
+            user.is_authenticated
+            and user.favorites.filter(recipe=recipe).exists()
         )
 
     def get_is_in_shopping_cart(self, recipe: Recipe) -> bool:
@@ -270,12 +241,9 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             True - рецепт в корзине у пользователя, иначе False.
 
         """
+        user = self.context['request'].user
         return (
-            self.context['request'].user.is_authenticated
-            and Cart.objects.filter(
-                user=self.context['request'].user,
-                recipe=recipe,
-            ).exists()
+            user.is_authenticated and user.carts.filter(recipe=recipe).exists()
         )
 
 
@@ -283,6 +251,17 @@ class IngredientsRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели `IngredientsRecipe`."""
 
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+    amount = serializers.IntegerField(
+        validators=[
+            MaxValueValidator(
+                limit_value=MAX_VALUE,
+                message='Превышает максималбное значение',
+            ),
+            MinValueValidator(
+                limit_value=MIN_VALUE, message='Укажите превильное количество',
+            ),
+        ],
+    )
 
     class Meta:
         model = IngredientsRecipe
@@ -298,6 +277,17 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         many=True,
     )
     image = Base64ImageField()
+    cooking_time = serializers.IntegerField(
+        validators=[
+            MaxValueValidator(
+                limit_value=MAX_VALUE,
+                message='Превышает максималбное значение',
+            ),
+            MinValueValidator(
+                limit_value=MIN_VALUE, message='Укажите превильное время',
+            ),
+        ],
+    )
 
     class Meta:
         model = Recipe
@@ -327,19 +317,18 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         """
         if not tags:
             raise serializers.ValidationError('Выберите тэги')
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError('Повторяющиеся тэги!')
         return tags
 
-    def validate_ingredients(
-        self,
-        ingredients: List[Dict[str, int]],
-    ) -> List[Dict[str, int]]:
+    def validate(self, data):
         """Валидация ингридиентов.
 
         При двух одинаковых ингридиетах и их одинаковых количествах,
         сохраняется только один ингридиент.
 
         Args:
-            ingredients: массив из данных ингридиентов.
+            data: данные, переданные в сериалзатор.
 
         Returns:
             В случае успешной валидации возвращает ингридиенты.
@@ -348,20 +337,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             ValidationError: Ошибка при валидации.
 
         """
+        ingredients = [
+            ingredient['id'] for ingredient in data.get('ingredients')
+        ]
         if not ingredients:
             raise serializers.ValidationError('Добавьте ингридиенты!')
-        ingredients = [
-            dict(_)
-            for _ in set(
-                frozenset(ingredient.items()) for ingredient in ingredients
-            )
-        ]
-        new_ing = []
-        for ingredient in ingredients:
-            if ingredient['id'] in new_ing:
-                raise serializers.ValidationError('Ингридиенты повторяются!')
-            new_ing.append(ingredient['id'])
-        return ingredients
+        if len(ingredients) != len(set(ingredients)):
+            raise serializers.ValidationError('Одинаковые ингридиенты')
+        return data
 
     def to_representation(self, instance: Recipe) -> OrderedDict[str, Any]:
         """Преобразует данные для выдачи.
@@ -375,8 +358,33 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         """
         return RecipeReadSerializer(
             instance,
-            context={'request': self.context['request']},
+            context=self.context,
         ).data
+
+    @staticmethod
+    def create_tags_ingredients(
+        recipe: Recipe,
+        ingredients: List[Dict[str, int]],
+        tags: List[int],
+    ) -> None:
+        """Добавление тегов и ингридиентов в рецепт.
+
+        Args:
+            recipe: Экземляр класса `Recipe`.
+            ingredients: Массив из данных ингридиентов.
+            tags: Массив id-тэгов.
+
+        """
+        ingredients = [
+            IngredientsRecipe(
+                recipe=recipe,
+                ingredient=ingredient['id'],
+                amount=ingredient['amount'],
+            )
+            for ingredient in ingredients
+        ]
+        IngredientsRecipe.objects.bulk_create(ingredients)
+        recipe.tags.set(tags)
 
     def create(self, validated_data: Dict[str, Any]) -> Recipe:
         """Метод для создания рецепта.
@@ -391,8 +399,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         """
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(**validated_data)
-        utils.create_tags_ingredients(recipe, ingredients, tags)
+        recipe = Recipe.objects.create(
+            author=self.context['request'].user, **validated_data,
+        )
+        self.create_tags_ingredients(recipe, ingredients, tags)
         return recipe
 
     def update(self, recipe: Recipe, validated_data: Dict[str, Any]) -> Recipe:
@@ -411,24 +421,16 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags')
         IngredientsRecipe.objects.filter(recipe=recipe).delete()
         recipe.tags.clear()
-        utils.create_tags_ingredients(recipe, ingredients, tags)
+        self.create_tags_ingredients(recipe, ingredients, tags)
         return super().update(recipe, validated_data)
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
     """Сериализатор для модели `Favorite`."""
 
-    id = serializers.IntegerField(source='recipe.pk', read_only=True)
-    name = serializers.CharField(source='recipe.name', read_only=True)
-    image = Base64ImageField(source='recipe.image', read_only=True)
-    cooking_time = serializers.IntegerField(
-        source='recipe.cooking_time',
-        read_only=True,
-    )
-
     class Meta:
         model = Favorite
-        fields = ('id', 'name', 'image', 'cooking_time', 'user', 'recipe')
+        fields = ('user', 'recipe')
         validators = [
             UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),
@@ -436,10 +438,20 @@ class FavoriteSerializer(serializers.ModelSerializer):
                 message='Рецепт уже добавлен в избранное',
             ),
         ]
-        extra_kwargs = {
-            'user': {'write_only': True},
-            'recipe': {'write_only': True},
-        }
+
+    def to_representation(self, instance: Favorite) -> OrderedDict[str, Any]:
+        """Преобразует данные для выдачи.
+
+        Args:
+            instance: Экземляр класса `Favorite`.
+
+        Returns:
+            Возвращает данные из сериализатора `RecipeFollowSerializer`.
+
+        """
+        return RecipeFollowSerializer(
+            instance.recipe, context=self.context,
+        ).data
 
 
 class CartSerializer(FavoriteSerializer):
