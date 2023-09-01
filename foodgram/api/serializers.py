@@ -1,6 +1,5 @@
 from typing import Any, Dict, List, OrderedDict
 
-from django.core.validators import MaxValueValidator, MinValueValidator
 from djoser.serializers import UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
@@ -149,7 +148,8 @@ class FollowsSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return FollowResultSerializer(
-            instance.author, context=self.context,
+            instance.author,
+            context=self.context,
         ).data
 
 
@@ -251,17 +251,7 @@ class IngredientsRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели `IngredientsRecipe`."""
 
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
-    amount = serializers.IntegerField(
-        validators=[
-            MaxValueValidator(
-                limit_value=MAX_VALUE,
-                message='Превышает максималбное значение',
-            ),
-            MinValueValidator(
-                limit_value=MIN_VALUE, message='Укажите превильное количество',
-            ),
-        ],
-    )
+    amount = serializers.IntegerField(max_value=MAX_VALUE, min_value=MIN_VALUE)
 
     class Meta:
         model = IngredientsRecipe
@@ -278,15 +268,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     )
     image = Base64ImageField()
     cooking_time = serializers.IntegerField(
-        validators=[
-            MaxValueValidator(
-                limit_value=MAX_VALUE,
-                message='Превышает максималбное значение',
-            ),
-            MinValueValidator(
-                limit_value=MIN_VALUE, message='Укажите превильное время',
-            ),
-        ],
+        max_value=MAX_VALUE, min_value=MIN_VALUE,
     )
 
     class Meta:
@@ -400,7 +382,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(
-            author=self.context['request'].user, **validated_data,
+            author=self.context['request'].user,
+            **validated_data,
         )
         self.create_tags_ingredients(recipe, ingredients, tags)
         return recipe
@@ -450,7 +433,8 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
         """
         return RecipeFollowSerializer(
-            instance.recipe, context=self.context,
+            instance.recipe,
+            context=self.context,
         ).data
 
 

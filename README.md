@@ -1,5 +1,7 @@
 # Foodgram
 
+![workflow status](https://github.com/YanaYugai/foodgram-project-react/actions/workflows/main.yml/badge.svg)
+
 ## Описание проекта
 
 Проект был создан в рамках прохождения курса Яндекс Практикума.

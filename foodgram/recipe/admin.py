@@ -12,19 +12,28 @@ from recipe.models import (
 
 class IngredientsRecipeInLine(admin.TabularInline):
     model = IngredientsRecipe
+    extra = 1
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author', 'favorite')
+    list_display = ('name', 'author', 'favorite', 'ingredients_name')
     search_fields = ('name',)
     list_filter = ('author', 'name', 'tags')
-    filter_horizontal = ('tags', 'ingredients')
+    filter_horizontal = ('tags',)
     inlines = (IngredientsRecipeInLine,)
+
+    def ingredients_name(self, recipe):
+        return ', '.join(
+            [ingredient.name for ingredient in recipe.ingredients.all()],
+        )
+
+    ingredients_name.short_description = 'Ингредиенты'
 
     def favorite(self, recipe):
         return recipe.favorites.count()
-    favorite.short_description = "Количество в избранном"
+
+    favorite.short_description = 'Количество в избранном'
 
 
 @admin.register(Tag)

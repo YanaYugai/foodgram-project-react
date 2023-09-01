@@ -79,9 +79,7 @@ class FollowApiView(views.APIView):
         """
         author = get_object_or_404(User, id=user_id)
         user = request.user
-        user.follower.filter(author=author).exists()
-        if user.follower.filter(author=author).exists():
-            Follow.objects.get(user=user.id, author=author.id).delete()
+        if Follow.objects.get(user=user.id, author=author.id).delete():
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -174,8 +172,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @favorite.mapping.delete
     def delete_favorite(self, request: WSGIRequest, pk: int) -> Response:
-        favorite = get_object_or_404(Favorite, user=request.user.id, recipe=pk)
-        favorite.delete()
+        get_object_or_404(Favorite, user=request.user.id, recipe=pk).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -212,8 +209,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             контента/плохой реквест.
 
         """
-        cart = get_object_or_404(Cart, user=request.user.id, recipe=pk)
-        cart.delete()
+        get_object_or_404(Cart, user=request.user.id, recipe=pk).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @staticmethod

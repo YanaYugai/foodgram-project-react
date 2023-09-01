@@ -49,7 +49,7 @@ class Follow(models.Model):
                 fields=('user', 'author'), name='Подписка сушествует.',
             ),
             models.CheckConstraint(
-                name="Подписка на самого себя",
+                name='Подписка на самого себя',
                 check=~models.Q(author=models.F("user")),
             ),
         )

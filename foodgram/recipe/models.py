@@ -13,7 +13,7 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ('name',)
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
         constraints = (
@@ -114,7 +114,7 @@ class IngredientsRecipe(models.Model):
         return f'{self.ingredient} - {self.amount}'
 
 
-class DefaultModel(models.Model):
+class UserRecipeModel(models.Model):
     user = models.ForeignKey(
         User,
         verbose_name='Пользователь',
@@ -133,7 +133,7 @@ class DefaultModel(models.Model):
         return f'{self.user} add {self.recipe}'
 
 
-class Cart(DefaultModel):
+class Cart(UserRecipeModel):
     class Meta:
         verbose_name = 'Корзине'
         verbose_name_plural = 'Корзина'
@@ -145,7 +145,7 @@ class Cart(DefaultModel):
         default_related_name = 'carts'
 
 
-class Favorite(DefaultModel):
+class Favorite(UserRecipeModel):
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
