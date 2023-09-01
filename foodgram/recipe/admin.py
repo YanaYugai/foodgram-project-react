@@ -13,6 +13,7 @@ from recipe.models import (
 class IngredientsRecipeInLine(admin.TabularInline):
     model = IngredientsRecipe
     extra = 1
+    min_num = 1
 
 
 @admin.register(Recipe)
