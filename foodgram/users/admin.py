@@ -20,12 +20,12 @@ class UserAdmin(UserAdmin):
     def count_recipes(self, user):
         return user.recipes.count()
 
-    count_recipes.short_description = "Количество рецептов"
+    count_recipes.short_description = 'Количество рецептов'
 
     def count_followers(self, user):
         return user.follower.count()
 
-    count_followers.short_description = "Количество подписок"
+    count_followers.short_description = 'Количество подписок'
 
 
 @admin.register(Follow)
