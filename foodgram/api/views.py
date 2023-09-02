@@ -79,7 +79,7 @@ class FollowApiView(views.APIView):
         """
         author = get_object_or_404(User, id=user_id)
         user = request.user
-        if Follow.objects.get(user=user.id, author=author.id).delete():
+        if Follow.objects.filter(user=user.id, author=author.id).delete():
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
