@@ -135,7 +135,7 @@ sudo systemctl reload nginx
 
 ## Примеры запросов
 
-Вся документация проекта представлена https://foodgramyana.hopto.org/api/docs/
+После запуска проекта, вам будет доступна документация по адресу: https://your_domain_name/api/docs/
 
 ## Автор
 
